@@ -1,8 +1,8 @@
 const { NotFoundError } = require("../errors/NotFoundError");
 const { ValidationError } = require("../errors/ValidationError");
-const {books,authors,getNextBookId} = require('../db');
+const db = require('../db');
 async function getAllBooks(req,res){
-    let result = books;
+    let result = await db.getAllBooks();
     const {releasedAfter} = req.query;
     if(releasedAfter){
         result = result.filter(a=>a.publishedYear > Number(releasedAfter));
@@ -11,7 +11,7 @@ async function getAllBooks(req,res){
 }
 async function getBookById(req,res){
     const id = req.parsedId;
-    const book = books.find(a=>a.id===id);
+    const book = await db.getBookById(id);
     if(!book){
         throw new NotFoundError(`Book with id ${id} not found`);
     }
@@ -19,42 +19,30 @@ async function getBookById(req,res){
 }
 async function createBook(req,res){
     const {title,genre,authorId,publishedYear}= req.body;
-    const authorExists = authors.find(a=>a.id===authorId);
+    const authorExists = await db.getAuthorById(authorId)
     if(!authorExists){
         throw new ValidationError(`Author with id ${authorId} not found`);
     }
-    const book = {
-        title : title,
-        genre : genre,
-        publishedYear:publishedYear,
-        id : getNextBookId(),
-        authorId : authorId,
-    }
-    books.push(book);
+    const book = await db.createBook({title,genre,authorId,publishedYear});
     res.status(201).json(book);
 }
 async function updateBook(req,res){
     const {title,genre,authorId,publishedYear}= req.body;
     const id = req.parsedId;
-    const book = books.find(a=>a.id === id);
+    const author = await db.getAuthorById(authorId);  
+    if (!author) throw new ValidationError(`No author exists with ID ${authorId}`);
+    const book = await db.updateBook(id,{title,genre,authorId,publishedYear});
     if(!book){
         throw new NotFoundError(`Book with ID ${id} not found`);
     }
-    const author = authors.find(a => a.id === authorId);  
-    if (!author) throw new ValidationError(`No author exists with ID ${authorId}`);
-    book.title = title;
-    book.genre = genre;
-    book.authorId = authorId;
-    book.publishedYear = publishedYear;
     res.json(book);
 }
 async function deleteBook(req,res){
     const id = req.parsedId;
-    const bookIndex = books.findIndex(a => a.id ===id);
-    if(bookIndex===-1){
-        throw new NotFoundError(`Book with ID ${id} not found`);
+    const book = await db.deleteBook(id);
+    if(!book){
+        throw new NotFoundError(`Book with id:${id} not found`)
     }
-    books.splice(bookIndex,1);
     res.status(204).end();
 }
 

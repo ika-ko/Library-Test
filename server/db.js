@@ -1,84 +1,85 @@
+require("dotenv").config();
+const {Pool} = require("pg");
 
-let authors = [
-    {
-        id: 1,
-        name: "J.R.R. Tolkien",
-        bio: "English writer, poet, and academic best known for high fantasy classics.",
-        bornYear: 1892
-    },
-    {
-        id: 2,
-        name: "George R.R. Martin",
-        bio: "American novelist and screenwriter best known for epic fantasy series.",
-        bornYear: 1948
-    },
-    {
-        id: 3,
-        name: "Agatha Christie",
-        bio: "English writer known for 66 detective novels and short story collections.",
-        bornYear: 1890
-    },
-    {
-        id: 4,
-        name: "Frank Herbert",
-        bio: "American science fiction author best known for the novel Dune.",
-        bornYear: 1920
-    }
-];
-let nextAuthorId = 5;   
-function getNextAuthorId() { return nextAuthorId++; }
-let books = [
-    {
-        id: 101,
-        title: "The Hobbit",
-        genre: "Fantasy",
-        publishedYear: 1937,
-        authorId: 1
-    },
-    {
-        id: 102,
-        title: "The Fellowship of the Ring",
-        genre: "Fantasy",
-        publishedYear: 1954,
-        authorId: 1
-    },
-    {
-        id: 103,
-        title: "A Game of Thrones",
-        genre: "Fantasy",
-        publishedYear: 1996,
-        authorId: 2
-    },
-    {
-        id: 104,
-        title: "A Clash of Kings",
-        genre: "Fantasy",
-        publishedYear: 1998,
-        authorId: 2
-    },
-    {
-        id: 105,
-        title: "And Then There Were None",
-        genre: "Mystery",
-        publishedYear: 1939,
-        authorId: 3
-    },
-    {
-        id: 106,
-        title: "Murder on the Orient Express",
-        genre: "Mystery",
-        publishedYear: 1934,
-        authorId: 3
-    },
-    {
-        id: 107,
-        title: "Dune",
-        genre: "Sci-Fi",
-        publishedYear: 1965,
-        authorId: 4
-    }
-];
-let nextBookId = 108;   
-function getNextBookId() { return nextBookId++; }
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+})
 
-module.exports = { authors, books,getNextAuthorId,getNextBookId };
+async function getAllAuthors(){
+    const {rows} = await pool.query(`SELECT id,name,bio,born_year as "bornYear" FROM authors ORDER BY id`);
+    return rows;
+}
+async function getAuthorById(id){
+    const {rows} = await pool.query(`SELECT id,name,bio,born_year AS "bornYear" FROM AUTHORS where id = $1`, [id]);
+    return rows[0];
+}
+async function createAuthor({name,bio,bornYear}){
+    const {rows} = await  pool.query(`
+        INSERT INTO authors (name,bio,born_year)
+        VALUES ($1,$2,$3) RETURNING id,name,bio,born_year AS "bornYear"`,
+    [name,bio,bornYear]);
+    return rows[0];
+}
+async function deleteAuthor(id){
+    const {rowCount} = await pool.query("DELETE FROM authors WHERE id = $1",[id]);
+    return rowCount>0;
+}
+async function updateAuthor(id, { name, bio, bornYear }) {
+  const { rows } = await pool.query(
+    `UPDATE authors SET name = $1, bio = $2, born_year = $3
+     WHERE id = $4
+     RETURNING id, name, bio, born_year AS "bornYear"`,
+    [name, bio, bornYear, id]
+  );
+  return rows[0];
+}
+async function getBooksByAuthor(authorId){
+    const {rows} =await pool.query(`
+            SELECT id, title, genre, published_year AS "publishedYear", author_id AS "authorId"
+            FROM books WHERE author_id = $1 order by id
+        `,[authorId]);
+    return rows;
+}
+async function getAllBooks(){
+    const {rows} = await pool.query(`SELECT b.id, b.title, b.genre,
+        b.published_year AS "publishedYear",
+        b.author_id      AS "authorId",
+        a.name           AS "authorName"
+        FROM books b
+        LEFT JOIN authors a ON b.author_id = a.id
+        ORDER BY b.id`)
+    return rows;
+}
+async function getBookById(id){
+    const {rows} = await pool.query(`SELECT b.id, b.title, b.genre,
+        b.published_year AS "publishedYear",
+        b.author_id      AS "authorId",
+        a.name           AS "authorName"
+        FROM books b
+        LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.id = $1`,[id]);
+    return rows[0];
+}
+async function createBook({title,genre,authorId,publishedYear}){
+    const {rows} = await pool.query(`
+        INSERT INTO books(title,genre,author_id,published_year) 
+        VALUES ($1,$2,$3,$4)
+        RETURNING id, title, genre, author_id AS "authorId", published_year AS "publishedYear"
+        `,[title,genre,authorId,publishedYear]);
+    return rows[0];
+}
+async function updateBook(id,{title,genre,authorId,publishedYear}){
+    const {rows} = await pool.query(`
+        UPDATE books SET title = $1, genre = $2, author_id = $3, published_year = $4
+        where id = $5 
+        returning id, title,genre,author_id as "authorId", published_year as "publishedYear"
+        `,[title,genre,authorId,publishedYear,id]);
+    return rows[0];
+}
+async function deleteBook(id){
+    const {rowCount} = await pool.query(`
+            delete from books where id = $1
+        `,[id]);
+    return rowCount>0;
+}
+module.exports = {getAllBooks,getBookById,updateBook,createBook,deleteBook,updateAuthor,deleteAuthor,getAllAuthors,getAuthorById,getBooksByAuthor,createAuthor}

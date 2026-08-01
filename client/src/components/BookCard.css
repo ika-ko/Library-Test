@@ -1,0 +1,66 @@
+.book-card-div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--round);
+  padding: 1.25rem 1.25rem 1.25rem 1.75rem;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* the spine */
+.book-card-div::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 9px;
+  background: var(--spine-1);
+}
+
+.book-card-div:nth-child(6n + 2)::before { background: var(--spine-2); }
+.book-card-div:nth-child(6n + 3)::before { background: var(--spine-3); }
+.book-card-div:nth-child(6n + 4)::before { background: var(--spine-4); }
+.book-card-div:nth-child(6n + 5)::before { background: var(--spine-5); }
+.book-card-div:nth-child(6n)::before     { background: var(--spine-6); }
+
+.book-card-div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(26, 28, 26, 0.09);
+}
+
+.mock-book-image {
+  aspect-ratio: 2 / 3;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.11) 0 6px, transparent 6px),
+    var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+}
+
+.book-info-div h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.book-info-div p {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+/* author name — last p — stays serif and darker */
+.book-info-div p:last-child {
+  font-family: var(--serif);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.98rem;
+  color: var(--ink);
+  font-style: italic;
+  margin-top: 0.35rem;
+}
