@@ -4,6 +4,7 @@ import {useState} from 'react'
 import useApi from "../hooks/useApi";
 import { getAuthorById, getAuthorBooks, deleteAuthor } from "../api/authors";
 import { BookCard } from "../components/BookCard";
+import { PageStatus } from "../components/PageStatus";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -15,25 +16,45 @@ function AuthorDetail() {
         data: author,
         loading: authorLoading,
         error: authorError,
-    } = useApi(() => getAuthorById(id));
+    } = useApi(() => getAuthorById(id), [id]);
 
     const {
         data: books,
         loading: booksLoading,
         error: booksError,
-    } = useApi(() => getAuthorBooks(id));
+    } = useApi(() => getAuthorBooks(id), [id]);
     
     const [deleting,setDeleting] = useState(false);
     const [delError,setDelError] = useState(null);
     if (authorLoading) {
-        return <h1>Loading...</h1>;
+        return <PageStatus label="Loading" title="Fetching author..." />;
     }
     if (authorError) {
-        return <h1>{authorError}</h1>;
+        return (
+            <PageStatus
+                label="Error"
+                title="Couldn't load this author"
+                message={authorError}
+                action={{ to: "/authors", label: "Back to authors" }}
+            />
+        );
     }
 
     async function handleDelete() {
-    if (!window.confirm(`Delete "${author.name}"? This can't be undone.`)) return;
+    // ON DELETE CASCADE takes the author's books with them. Nothing else in the UI tells
+    // the user that, so the confirm has to.
+    const bookCount = books?.length ?? 0;
+    const cascadeWarning =
+        bookCount > 0
+            ? ` This also deletes ${bookCount} book${bookCount === 1 ? "" : "s"} by this author.`
+            : "";
+
+    if (
+        !window.confirm(
+            `Delete "${author.name}"?${cascadeWarning} This can't be undone.`
+        )
+    )
+        return;
 
     setDeleting(true);
     try {
@@ -60,8 +81,9 @@ function AuthorDetail() {
                 </div>
 
                 <div className="author-detail-actions-div">
-                    <button className="btn btn-delete" onClick={handleDelete}>Delete</button>
+                    <button className="btn btn-delete" disabled={deleting} onClick={handleDelete}>{deleting ? "Deleting..." : "Delete"}</button>
                     <Link to={`/authors/${author.id}/edit`} className="btn btn-edit">Edit</Link>
+                    {delError && <p className="form-error">{delError}</p>}
                 </div>
             </header>
 

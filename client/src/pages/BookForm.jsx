@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import useApi from "../hooks/useApi";
 import { getAllAuthors } from "../api/authors";
 import { getBookById, createBook, updateBook } from "../api/books";
+import { PageStatus } from "../components/PageStatus";
 import "./BookForm.css";
 
 export default function BookForm(){
@@ -12,7 +13,7 @@ export default function BookForm(){
 
     const [title,setTitle] = useState("");
     const [genre,setGenre] = useState("");
-    const [publishedYear,setPublishedYear] = useState();
+    const [publishedYear,setPublishedYear] = useState("");
     const [authorId, setAuthorId] = useState("");
 
     const [loadingBook, setLoadingBook] = useState(isEdit);
@@ -26,9 +27,10 @@ export default function BookForm(){
         let cancelled = false;
         
         getBookById(id).then((book)=>{
-            setTitle(book.title);
+            if(cancelled) return;
+            setTitle(book.title ?? "");
             setGenre(book.genre ?? "");
-            setPublishedYear(book.publishedyear ?? "");
+            setPublishedYear(book.publishedYear ?? "");
             setAuthorId(String(book.authorId ?? ""));
         }).catch((err)=>{
             if(!cancelled) setError(err.message);
@@ -46,7 +48,7 @@ export default function BookForm(){
         const payload = {
             title : title.trim(),
             genre: genre.trim()||null,
-            publishedYear: publishedYear ? Number(publishedyear) :null,
+            publishedYear: publishedYear ? Number(publishedYear) :null,
             authorId: Number(authorId)
         }
         try{
@@ -58,7 +60,7 @@ export default function BookForm(){
         }
     }
     if (loadingBook) {
-        return <h1>Loading...</h1>;
+        return <PageStatus label="Loading" title="Fetching book..." />;
     }
 
     return (

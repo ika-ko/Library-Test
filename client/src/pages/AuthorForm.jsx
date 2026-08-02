@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAuthorById, updateAuthor, createAuthor } from "../api/authors";
+import { PageStatus } from "../components/PageStatus";
 import "./AuthorForm.css";
 
 export default function AuthorForm() {
@@ -64,7 +65,7 @@ export default function AuthorForm() {
     }
 
     if (loading) {
-        return <h1>Loading...</h1>;
+        return <PageStatus label="Loading" title="Fetching author..." />;
     }
 
     return (

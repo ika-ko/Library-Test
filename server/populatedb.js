@@ -41,4 +41,7 @@ async function main() {
   console.log("done");
 }
 
-main();
+main().catch((err) => {
+  console.error("Seeding failed:", err);
+  process.exitCode = 1;
+});

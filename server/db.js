@@ -5,12 +5,18 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 })
 
+// A client can fail while sitting idle in the pool (server restart, network drop). That
+// surfaces as an 'error' event with no listener, which takes the whole process down.
+pool.on('error', (err) => {
+    console.error('Unexpected idle client error', err);
+});
+
 async function getAllAuthors(){
     const {rows} = await pool.query(`SELECT id,name,bio,born_year as "bornYear" FROM authors ORDER BY id`);
     return rows;
 }
 async function getAuthorById(id){
-    const {rows} = await pool.query(`SELECT id,name,bio,born_year AS "bornYear" FROM AUTHORS where id = $1`, [id]);
+    const {rows} = await pool.query(`SELECT id,name,bio,born_year AS "bornYear" FROM authors WHERE id = $1`, [id]);
     return rows[0];
 }
 async function createAuthor({name,bio,bornYear}){
@@ -35,8 +41,14 @@ async function updateAuthor(id, { name, bio, bornYear }) {
 }
 async function getBooksByAuthor(authorId){
     const {rows} =await pool.query(`
-            SELECT id, title, genre, published_year AS "publishedYear", author_id AS "authorId"
-            FROM books WHERE author_id = $1 order by id
+            SELECT b.id, b.title, b.genre,
+                   b.published_year AS "publishedYear",
+                   b.author_id      AS "authorId",
+                   a.name           AS "authorName"
+            FROM books b
+            LEFT JOIN authors a ON b.author_id = a.id
+            WHERE b.author_id = $1
+            ORDER BY b.id
         `,[authorId]);
     return rows;
 }
