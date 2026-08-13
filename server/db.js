@@ -94,4 +94,39 @@ async function deleteBook(id){
         `,[id]);
     return rowCount>0;
 }
-module.exports = {getAllBooks,getBookById,updateBook,createBook,deleteBook,updateAuthor,deleteAuthor,getAllAuthors,getAuthorById,getBooksByAuthor,createAuthor}
+async function getUserByUsername(username){
+    const {rows} = await pool.query(`
+            SELECT * FROM users WHERE username = $1
+        `,[username])
+        return rows[0]||null;
+}
+async function getUserById(id) {
+  const { rows } = await pool.query(
+    "SELECT id, username, created_at FROM users WHERE id = $1",
+    [id]
+  );
+  return rows[0]||null;
+}
+async function createUser(username,hashedPassword){
+    const {rows} = await pool.query(`
+        INSERT INTO users(username,password) 
+        VALUES ($1,$2)
+        RETURNING id,username,created_at;
+        `,[username,hashedPassword]);
+    return rows[0];
+}
+async function updateUser(id,{username,hashedPassword}){
+    const {rows} = await pool.query(`
+        UPDATE users SET username = $1, password = $2 
+        WHERE id = $3
+        RETURNING id,username,created_at
+        `,[username,hashedPassword,id]);
+    return rows[0];
+}
+async function deleteUser(id){
+    const {rowCount} = await pool.query(`
+        DELETE FROM users WHERE id = $1
+        `,[id]);
+    return rowCount;
+}
+module.exports = {getUserByUsername,getUserById,deleteUser,updateUser,createUser,getAllBooks,getBookById,updateBook,createBook,deleteBook,updateAuthor,deleteAuthor,getAllAuthors,getAuthorById,getBooksByAuthor,createAuthor}

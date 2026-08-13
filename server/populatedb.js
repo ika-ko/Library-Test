@@ -18,6 +18,24 @@ CREATE TABLE IF NOT EXISTS books (
   author_id INTEGER REFERENCES authors(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(55) UNIQUE NOT NULL,
+  password VARCHAR(256) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+
+CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+
 INSERT INTO authors (name, bio, born_year) VALUES
   ('J.R.R. Tolkien', 'English writer, poet, and academic.', 1892),
   ('George R.R. Martin', 'American novelist and screenwriter.', 1948),

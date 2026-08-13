@@ -1,0 +1,43 @@
+/* src/pages/AuthForm.css */
+.auth-form-page-div {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+}
+
+.auth-form-page-div > h1 {
+    font-size: 2.2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 3px solid var(--shelf);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.auth-form .btn-row {
+    justify-content: center;
+}
+
+.auth-form .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.auth-form-switch {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-family: var(--label);
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+}
+
+.auth-form-switch a {
+    color: var(--brass);
+    text-decoration: underline;
+}

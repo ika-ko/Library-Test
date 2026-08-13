@@ -4,15 +4,34 @@ const express = require('express');
 const app = express();
 const authorRouter = require('./routes/authorRouter');
 const bookRouter = require('./routes/bookRouter');
+const authRouter = require('./routes/authRouter')
+const passport = require("passport");
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const { NotFoundError } = require('./errors/NotFoundError');
 
 const corsOptions = {
     origin : process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
 }
-
-app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cors(corsOptions));
+app.use(session({
+    store : new pgSession({conString : process.env.DATABASE_URL}),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true, // Blocks client JS from accessing cookie (XSS protection)
+        sameSite: 'lax', // Controls cross-site cookie behavior (CSRF protection)
+        secure: process.env.NODE_ENV === 'production', // Forces HTTPS in production
+        maxAge: 1000 * 60 * 60 * 24 * 7 // Cookie duration in ms (e.g., 7 days)
+    }
+}));
+require('./config/passport');
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/api/auth',authRouter);
 app.use('/api/authors',authorRouter);
 app.use('/api/books',bookRouter);
 app.use((req, res, next) => {

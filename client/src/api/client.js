@@ -4,6 +4,7 @@ export async function request(urlPath, options){
         {headers : {
         'content-type' : 'application/json',
         },
+        credentials: 'include',
         ...options
     })
      if(!res.ok){
